@@ -1,89 +1,67 @@
 package com.example.codehiveregestrationtwo
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import com.example.codehiveregestrationtwo.api.ApiClient
 import com.example.codehiveregestrationtwo.api.ApiInterface
-import com.example.codehiveregestrationtwo.module.Loginrequest
-import com.example.codehiveregestrationtwo.module.Loginrespond
-import com.example.codehiveregestrationtwo.module.Registrationrespond
+import com.example.codehiveregestrationtwo.databinding.ActivityCourseactivityBinding
+import com.example.codehiveregestrationtwo.databinding.ActivityLoginBinding
+import com.example.codehiveregestrationtwo.databinding.ActivityMainBinding
+import com.example.codehiveregestrationtwo.models.Loginrequest
+import com.example.codehiveregestrationtwo.models.Loginrespond
+import com.example.codehiveregestrationtwo.viewmodel.loginViewModel
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Response
-import java.util.*
-import javax.security.auth.callback.Callback
 
 class LoginActivity : AppCompatActivity() {
-    lateinit var etemail: EditText
-    lateinit var etpassword: EditText
-    lateinit var btnLogin: Button
+    lateinit var binding: ActivityLoginBinding
+    lateinit var sharedPreferences: SharedPreferences
+    val loginViewModel:loginViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        binding= ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        castviews()
+      sharedPreferences=getSharedPreferences("CODEHIVE_REG_PREF",Context.MODE_PRIVATE)
+      binding.btnLogin.setOnClickListener {
 
-
-
-    }
-    fun castviews() {
-        etemail = findViewById(R.id.etemail)
-        etpassword = findViewById(R.id.etpassword)
-        btnLogin = findViewById(R.id.btnLogin)
-       clicklogin()
-
-    }
-    fun clicklogin() {
-        var error=false
-        btnLogin.setOnClickListener {
-            var email = etemail.text.toString()
+            var email = binding.etemail.toString()
             if (email.isEmpty()) {
-                error=true
-                etemail.setError("email is required")
+                binding.etemail.setError("Email Required")
+
 
             }
-            var password = etpassword.toString()
+            var password = binding.etpassword.toString()
             if (password.isEmpty()) {
-                error=true
-                etpassword.setError("Password is required")
+                binding.etpassword.setError("Password is required")
             }
             var loginrequest = Loginrequest(
                 email = email,
                 password = password
             )
+          loginViewModel.login(loginrequest)
+        }
 
+        }
+    override fun onResume() {
+        super.onResume()
+        loginViewModel.loginLiveData.observe(this, { loginResponse ->
+            Toast.makeText(baseContext, loginResponse.message, Toast.LENGTH_LONG).show()
+            var accessToken = loginResponse.accessToken
+            sharedPreferences.edit().putString("ACCESS_TOKEN", accessToken).apply()
+            var x = sharedPreferences.getString("ACCESS_TOKEN", "")
 
-            val retrofit = ApiClient.buildApiClient(ApiInterface::class.java)
-            var request = retrofit.loginstudent(loginrequest)
-            request.enqueue(object :retrofit2.Callback<Loginrespond> {
-                override fun onResponse(call: Call<Loginrespond>, response: Response<Loginrespond>) {
-                    if (response.isSuccessful){
-                        Toast.makeText(baseContext, "login Successful", Toast.LENGTH_LONG).show()
-                        var intent=Intent( baseContext,courseactivity::class.java)
-                        startActivity(intent)
-                    }
-
-                    else{
-                        try {
-                            val error = JSONObject(response.errorBody()!!.string())
-                            Toast.makeText(baseContext, error.toString(), Toast.LENGTH_LONG)
-                                .show()
-                        } catch (e: Exception) {
-                            Toast.makeText(baseContext, e.message, Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-
-                override fun onFailure(call: Call<Loginrespond>, t: Throwable) {
-                    Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
-                }
-            })
+        })
+        loginViewModel.loginFailedLiveData.observe(this) { error ->
+            Toast.makeText(baseContext, error, Toast.LENGTH_LONG).show()
         }
     }
 }

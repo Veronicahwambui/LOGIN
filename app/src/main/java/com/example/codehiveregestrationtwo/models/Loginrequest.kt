@@ -1,4 +1,4 @@
-package com.example.codehiveregestrationtwo.module
+package com.example.codehiveregestrationtwo.models
 
 data class Loginrequest(
     var email:String,

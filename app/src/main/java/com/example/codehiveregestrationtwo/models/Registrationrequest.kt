@@ -1,4 +1,4 @@
-package com.example.codehiveregestrationtwo.module
+package com.example.codehiveregestrationtwo.models
 
 import com.google.gson.annotations.SerializedName
 
