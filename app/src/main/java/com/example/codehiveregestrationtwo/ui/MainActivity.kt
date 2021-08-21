@@ -2,7 +2,9 @@ package com.example.codehiveregestrationtwo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.*
@@ -14,6 +16,7 @@ import com.example.codehiveregestrationtwo.databinding.ActivityLoginBinding
 import com.example.codehiveregestrationtwo.databinding.ActivityMainBinding
 import com.example.codehiveregestrationtwo.models.Registrationrequest
 import com.example.codehiveregestrationtwo.models.Registrationrespond
+import com.example.codehiveregestrationtwo.ui.courseactivity
 import com.example.codehiveregestrationtwo.viewmodel.UserViewModel
 import org.json.JSONObject
 import retrofit2.Call
@@ -23,14 +26,25 @@ import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
+    lateinit var sharedPreferences: SharedPreferences
     val userViewModel: UserViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding= ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        sharedPreferences=getSharedPreferences(Consants.SharedPreferences,Context.MODE_PRIVATE)
+        redirect()
     }
 
+    fun redirect(){
+        var accesstoken=sharedPreferences.getString(Consants.ACCESS_TOKEN,Consants.EMPTY_STRING)
+        if (accesstoken!!.isNotEmpty()){
+            startActivity(Intent(baseContext, courseactivity::class.java))
+        }else{
+            startActivity(Intent(baseContext,LoginActivity::class.java))
+        }
+    }
     override fun onResume() {
         super.onResume()
         var intent = Intent(baseContext, LoginActivity::class.java)
@@ -46,6 +60,7 @@ class MainActivity : AppCompatActivity() {
             )
 
             userViewModel.registerUser(registrationRequest)
+
         }
         userViewModel.registrationLiveData.observe(this
         ) { registrationResponse ->

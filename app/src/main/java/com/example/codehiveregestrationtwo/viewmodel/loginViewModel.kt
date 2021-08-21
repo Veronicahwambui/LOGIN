@@ -20,7 +20,7 @@ class  loginViewModel:ViewModel() {
             if (response.isSuccessful){
                 loginLiveData.postValue(response.body())
             }else{
-                loginFailedLiveData.postValue(response.errorBody()?.toString())
+                loginFailedLiveData.postValue(response.errorBody()?.string())
             }
 
         }
